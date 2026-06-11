@@ -223,6 +223,9 @@ __marimo__/
 *.db-shm
 *.db-wal
 
+# Generated charts
+/output
+
 # Markdowns
 NOTES.md
 
