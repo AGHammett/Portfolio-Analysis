@@ -1,15 +1,16 @@
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
-_PROJECT_ROOT = Path(__file__).parent.parent.parent
-_DB_PATH = _PROJECT_ROOT / "data" / "portfolio.db"
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+import config
 
 
 def get_connection():
     """Open and return a SQLite connection, creating the data directory if needed."""
-    _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return sqlite3.connect(_DB_PATH)
+    config.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    return sqlite3.connect(config.DB_PATH)
 
 
 def setup_db(conn):

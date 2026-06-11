@@ -4,6 +4,44 @@ import polars as pl
 import yfinance as yf
 
 
+def fetch_and_store_ticker(conn, ticker: str, start_date: str) -> int:
+    """Fetch price history for a single ticker from start_date and upsert into prices table.
+
+    Returns the number of rows inserted, or -1 on failure.
+    """
+    yf_ticker = yf.Ticker(ticker)
+    raw = yf_ticker.history(start=start_date, auto_adjust=True)
+    if raw.empty:
+        return -1
+
+    # yfinance returns LSE stocks in GBp (pence) but some ETFs/funds in GBP (pounds).
+    # Normalise everything to pence so it's consistent with avg_cost_p in holdings.
+    currency = (yf_ticker.fast_info or {}).get("currency", "GBp")
+    gbp_to_pence = currency == "GBP"
+
+    raw.index = raw.index.tz_localize(None)
+    df = (
+        pl.from_pandas(raw.reset_index()[["Date", "Close"]])
+        .rename({"Date": "date", "Close": "close"})
+        .with_columns([
+            pl.lit(ticker).alias("ticker"),
+            pl.col("date").dt.strftime("%Y-%m-%d"),
+            (pl.col("close") * (100 if gbp_to_pence else 1)).round(4),
+        ])
+        .filter(pl.col("close").is_not_null())
+        .select(["ticker", "date", "close"])
+    )
+
+    rows = df.rows()
+    conn.executemany(
+        "INSERT OR REPLACE INTO prices (ticker, date, close) VALUES (?, ?, ?)",
+        rows,
+    )
+    if gbp_to_pence:
+        print(f"  {ticker}: GBP→GBp conversion applied")
+    return len(rows)
+
+
 def fetch_prices(conn, holding_tickers: list, benchmarks: list, price_history_years: int) -> None:
     """Fetch adjusted close prices from Yahoo Finance for all holding tickers and benchmarks."""
     benchmark_tickers = [b["ticker"] for b in benchmarks]
@@ -15,49 +53,33 @@ def fetch_prices(conn, holding_tickers: list, benchmarks: list, price_history_ye
         print("       Add ticker mappings to data/ticker_map.json and re-run.")
         return
 
-    start_date = (
+    full_start = (
         datetime.today() - timedelta(days=365 * price_history_years)
     ).strftime("%Y-%m-%d")
-    print(f"\nFetching price history from {start_date} for: {fetchable}")
+    print(f"\nFetching prices (incremental where possible, full history from {full_start}):")
 
     inserted = 0
     failed = []
 
     for ticker in fetchable:
         try:
-            yf_ticker = yf.Ticker(ticker)
-            raw = yf_ticker.history(start=start_date, auto_adjust=True)
-            if raw.empty:
+            row = conn.execute(
+                "SELECT MAX(date) FROM prices WHERE ticker = ?", (ticker,)
+            ).fetchone()[0]
+            if row:
+                # Fetch from the day after the last stored date
+                last = datetime.strptime(row, "%Y-%m-%d")
+                start_date = (last + timedelta(days=1)).strftime("%Y-%m-%d")
+            else:
+                start_date = full_start
+
+            n = fetch_and_store_ticker(conn, ticker, start_date)
+            if n == -1:
                 failed.append(ticker)
-                continue
-
-            # yfinance returns LSE stocks in GBp (pence) but some ETFs/funds in GBP (pounds).
-            # Normalise everything to pence so it's consistent with avg_cost_p in holdings.
-            currency = (yf_ticker.fast_info or {}).get("currency", "GBp")
-            gbp_to_pence = currency == "GBP"
-
-            raw.index = raw.index.tz_localize(None)
-            df = (
-                pl.from_pandas(raw.reset_index()[["Date", "Close"]])
-                .rename({"Date": "date", "Close": "close"})
-                .with_columns([
-                    pl.lit(ticker).alias("ticker"),
-                    pl.col("date").dt.strftime("%Y-%m-%d"),
-                    (pl.col("close") * (100 if gbp_to_pence else 1)).round(4),
-                ])
-                .filter(pl.col("close").is_not_null())
-                .select(["ticker", "date", "close"])
-            )
-            if gbp_to_pence:
-                print(f"  {ticker}: GBP→GBp conversion applied")
-
-            rows = df.rows()
-            conn.executemany(
-                "INSERT OR REPLACE INTO prices (ticker, date, close) VALUES (?, ?, ?)",
-                rows,
-            )
-            inserted += len(rows)
-            print(f"  {ticker}: {len(rows)} days")
+                print(f"  {ticker}: no data returned")
+            else:
+                inserted += n
+                print(f"  {ticker}: {n} new days (from {start_date})")
 
         except Exception as e:
             failed.append(ticker)
