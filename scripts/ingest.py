@@ -7,8 +7,10 @@ Sources:
   2. yfinance        →  prices table
   3. BoE / ONS CSVs  →  macro table
 
-Configure portfolios, benchmarks, and ticker mappings in config.py.
+Configure portfolios and benchmarks in config.py.
+Ticker mappings live in data/ticker_map.json.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -21,6 +23,8 @@ from src.pipeline.parsers import hargreaves_lansdown
 from src.pipeline.loaders import prices as prices_loader
 from src.pipeline.loaders import macro as macro_loader
 
+TICKER_MAP_PATH = PROJECT_ROOT / "data" / "ticker_map.json"
+
 _BROKER_PARSERS = {
     "hargreaves_lansdown": hargreaves_lansdown,
 }
@@ -30,6 +34,12 @@ def main():
     """Run a full data refresh: load holdings from each portfolio CSV, fetch prices, load macro data."""
     print("Portfolio Analyser — data ingestion")
     print("=" * 40)
+
+    if not TICKER_MAP_PATH.exists():
+        print(f"[ERROR] Ticker map not found at {TICKER_MAP_PATH}")
+        sys.exit(1)
+    with TICKER_MAP_PATH.open(encoding="utf-8") as f:
+        ticker_map = json.load(f)
 
     conn = pipeline_db.get_connection()
     pipeline_db.setup_db(conn)
@@ -42,7 +52,7 @@ def main():
         if parser is None:
             print(f"\n[SKIP] No parser for broker '{broker}' (portfolio: {portfolio_id})")
             continue
-        tickers = parser.load(conn, portfolio_id, portfolio_cfg["file"], config.TICKER_MAP)
+        tickers = parser.load(conn, portfolio_id, portfolio_cfg["file"], ticker_map)
         all_tickers.extend(tickers)
 
     prices_loader.fetch_prices(

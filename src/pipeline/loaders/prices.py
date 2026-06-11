@@ -12,7 +12,7 @@ def fetch_prices(conn, holding_tickers: list, benchmarks: list, price_history_ye
 
     if not fetchable:
         print("\n[SKIP] No valid Yahoo Finance tickers to fetch.")
-        print("       Add ticker mappings to TICKER_MAP in config.py and re-run.")
+        print("       Add ticker mappings to data/ticker_map.json and re-run.")
         return
 
     start_date = (
@@ -25,10 +25,16 @@ def fetch_prices(conn, holding_tickers: list, benchmarks: list, price_history_ye
 
     for ticker in fetchable:
         try:
-            raw = yf.Ticker(ticker).history(start=start_date, auto_adjust=True)
+            yf_ticker = yf.Ticker(ticker)
+            raw = yf_ticker.history(start=start_date, auto_adjust=True)
             if raw.empty:
                 failed.append(ticker)
                 continue
+
+            # yfinance returns LSE stocks in GBp (pence) but some ETFs/funds in GBP (pounds).
+            # Normalise everything to pence so it's consistent with avg_cost_p in holdings.
+            currency = (yf_ticker.fast_info or {}).get("currency", "GBp")
+            gbp_to_pence = currency == "GBP"
 
             raw.index = raw.index.tz_localize(None)
             df = (
@@ -37,11 +43,13 @@ def fetch_prices(conn, holding_tickers: list, benchmarks: list, price_history_ye
                 .with_columns([
                     pl.lit(ticker).alias("ticker"),
                     pl.col("date").dt.strftime("%Y-%m-%d"),
-                    pl.col("close").round(4),
+                    (pl.col("close") * (100 if gbp_to_pence else 1)).round(4),
                 ])
                 .filter(pl.col("close").is_not_null())
                 .select(["ticker", "date", "close"])
             )
+            if gbp_to_pence:
+                print(f"  {ticker}: GBP→GBp conversion applied")
 
             rows = df.rows()
             conn.executemany(

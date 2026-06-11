@@ -14,6 +14,7 @@ A personal UK investment portfolio analysis tool. Ingests holdings from Hargreav
 
 ```
 config.py                        ← portfolios, benchmarks, settings, ticker map
+.mcp.json.example                ← MCP server config template (copy to .mcp.json)
 scripts/
     ingest.py                    ← run this to refresh all data
 src/pipeline/
@@ -24,6 +25,8 @@ src/pipeline/
     loaders/
         prices.py                ← Yahoo Finance price history
         macro.py                 ← BoE base rate + ONS CPI
+src/mcp_servers/
+    yfinance_server.py           ← MCP server for on-demand price fetching
 data/
     portfolio.db                 ← SQLite database (gitignored)
     raw/
@@ -50,7 +53,7 @@ data/
    python -m venv .venv
    .venv\Scripts\activate      # Windows
    source .venv/bin/activate   # macOS / Linux
-   pip install polars yfinance
+   pip install polars yfinance mcp
    ```
 
 2. Edit `config.py` to match your portfolios and file paths.
@@ -66,6 +69,16 @@ data/
    python scripts/ingest.py
    ```
 
+6. Set up the MCP servers for Claude Code:
+   ```
+   cp .mcp.json.example .mcp.json   # or copy on Windows
+   ```
+   Then edit `.mcp.json` and replace the placeholder paths with your actual paths:
+   - `sqlite` → absolute path to `data/portfolio.db`
+   - `yfinance` → path to your Python executable and to `src/mcp_servers/yfinance_server.py`
+
+   On **macOS/Linux**, change `"command": "npx.cmd"` to `"command": "npx"` in the sqlite entry.
+
 ## Adding a new holding
 
 When a holding appears in the HL export but has no Yahoo Finance ticker, ingest will flag it:
@@ -80,7 +93,7 @@ Add the entry to `TICKER_MAP` in `config.py` and re-run ingest.
 
 ## Analysis
 
-Open a Claude Code session in this directory (`claude`) and ask questions in plain English. Three specialised skills handle different types of question:
+Open a Claude Code session in this directory (`claude`) and ask questions in plain English. Four specialised skills handle different types of question:
 
 ### `/analysis`
 Performance, returns, and risk. Use this for questions about how holdings or the overall portfolio have done — total return, volatility, Sharpe ratio, concentration, and sector or geographic breakdown.
@@ -102,5 +115,12 @@ Economic context. Overlays BoE base rate and ONS CPI data to frame returns in te
 - *How have my real returns compared to inflation?*
 - *How has the rate cycle affected my bond holdings?*
 - *What's my portfolio returned above the risk-free rate?*
+
+### `/counterfactual`
+What-if scenarios. Simulates how the portfolio would have performed under hypothetical changes — swapping a holding, adding a new position, or redistributing weights — using actual historical prices.
+
+- *How would my ISA have performed if I'd put 10% into AAPL a year ago?*
+- *What if I'd swapped RR.L for BA.L six months ago?*
+- *How would an equal-weight version of my portfolio have done?*
 
 Past performance does not predict future returns.

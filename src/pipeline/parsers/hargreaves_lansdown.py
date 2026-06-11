@@ -108,7 +108,7 @@ def load(conn, portfolio_id: str, csv_path, ticker_map: dict) -> list:
 
     if unmatched:
         print(f"\n  [ACTION NEEDED] {len(unmatched)} holdings have no ticker mapping.")
-        print("  Add them to TICKER_MAP in config.py:")
+        print("  Add them to data/ticker_map.json:")
         for name, fallback in unmatched:
             print(f"    \"{name.lower()[:40]}\": \"TICKER.L\",   # currently using: {fallback}")
 

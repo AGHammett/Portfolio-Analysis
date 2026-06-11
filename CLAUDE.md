@@ -29,15 +29,23 @@ When querying holdings across portfolios, join `holdings` to `portfolios` on `po
 - `analysis` — use for performance, returns, volatility, Sharpe ratio questions
 - `benchmark` — use for comparisons against FTSE or other indices
 - `macro` — use for questions involving interest rates or inflation context
+- `counterfactual` — use for what-if scenarios: swapping holdings, adding new positions, redistributing weights
+
+## MCP servers
+Two MCP servers are available (configured in `.mcp.json`):
+- `sqlite` — read/write access to `data/portfolio.db`; use this for all database queries
+- `yfinance` — fetches price history for any Yahoo Finance ticker and inserts it into the prices table; use the `fetch_ticker_prices` tool when a counterfactual ticker is not yet in the prices table
 
 ## Data ingestion
 Run `scripts/ingest.py` to refresh prices and load new HL exports.
-Configure portfolios, benchmarks, and ticker mappings in `config.py` at the project root.
+Configure portfolios and benchmarks in `config.py` at the project root.
+Ticker mappings (HL name fragments → Yahoo Finance tickers) live in `data/ticker_map.json`.
 HL CSV exports live in `data/raw/` — file paths are set per portfolio in `config.py`.
 
 ## Code layout
 ```
-config.py                        ← portfolios, benchmarks, settings, ticker map
+config.py                        ← portfolios, benchmarks, settings
+data/ticker_map.json             ← HL name → Yahoo Finance ticker mappings
 scripts/ingest.py                ← thin orchestrator, run this to refresh data
 src/pipeline/
     db.py                        ← connection, schema setup, migration, seeding

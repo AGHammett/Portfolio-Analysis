@@ -130,4 +130,4 @@ def print_summary(conn):
     if coverage:
         print("\n  Price coverage:")
         for ticker, start, end, n in coverage:
-            print(f"    {ticker}: {start} → {end} ({n} days)")
+            print(f"    {ticker}: {start} -> {end} ({n} days)")

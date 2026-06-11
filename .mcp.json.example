@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx.cmd",
+      "args": [
+        "--yes",
+        "mcp-server-sqlite"
+      ],
+      "env": {
+        "SQLITE_DB_PATH": "C:\\path\\to\\Portfolio-Analysis\\data\\portfolio.db"
+      }
+    },
+    "yfinance": {
+      "type": "stdio",
+      "command": "C:\\path\\to\\python.exe",
+      "args": [
+        "C:\\path\\to\\Portfolio-Analysis\\src\\mcp_servers\\yfinance_server.py"
+      ]
+    }
+  }
+}
