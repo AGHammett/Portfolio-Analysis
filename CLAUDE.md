@@ -32,9 +32,20 @@ When querying holdings across portfolios, join `holdings` to `portfolios` on `po
 - `counterfactual` — use for what-if scenarios: swapping holdings, adding new positions, redistributing weights
 
 ## MCP servers
-Two MCP servers are available (configured in `.mcp.json`):
+Three MCP servers are available (configured in `.mcp.json`):
 - `sqlite` — read/write access to `data/portfolio.db`; use this for all database queries
 - `yfinance` — fetches price history for any Yahoo Finance ticker and inserts it into the prices table; use the `fetch_ticker_prices` tool when a counterfactual ticker is not yet in the prices table
+- `plotting` — generates interactive Plotly charts saved as HTML to `output/charts/`; use when the user asks for a chart or visual
+
+## Plotting tools
+The plotting MCP server exposes five tools:
+- `plot_performance(tickers, label_map, start_date, end_date, title, show_macro)` — normalised price lines for individual tickers; pass `show_macro=True` to overlay BoE base rate and CPI on a second y-axis
+- `plot_portfolio_performance(portfolio_id, benchmark_tickers, benchmark_label_map, start_date, end_date, min_coverage)` — aggregate portfolio value (units × price, summed) normalised to 100, with benchmark overlays; excludes holdings below `min_coverage` (default 50%) and warns
+- `plot_portfolio_real_vs_nominal(portfolio_id, start_date, end_date, min_coverage)` — aggregate portfolio value as both nominal and CPI-adjusted real return on one chart
+- `plot_portfolio_breakdown(portfolio_id, breakdown_by)` — pie chart by holding, sector, or geography
+- `plot_real_vs_nominal(tickers, label_map, start_date, end_date)` — nominal vs CPI-adjusted real return lines for individual tickers
+
+If the plotting tools are not available as MCP tools in the current session, call `src/mcp_servers/plotting_server.py` directly via `.venv/Scripts/python.exe`.
 
 ## Data ingestion
 Run `scripts/ingest.py` to refresh prices and load new HL exports.

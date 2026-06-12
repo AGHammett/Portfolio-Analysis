@@ -70,3 +70,10 @@ Follow with a plain English summary covering:
 
 Always note that this is backward-looking and past outperformance does not imply
 it would outperform in future. Never frame the output as a recommendation.
+
+## Plotting
+
+When the user asks for a chart or visual, use the plotting MCP server:
+- `plot_performance(tickers, label_map, ...)` — plot the actual holding alongside the counterfactual ticker, normalised to 100 at the start of the period
+
+Charts are saved as interactive HTML to `output/charts/`.

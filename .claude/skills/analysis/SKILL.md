@@ -48,3 +48,12 @@ For portfolio-level analysis: summary table of all holdings with key metrics,
 then aggregate figures, then a short interpretation.
 Always state the date range used.
 Always note that past performance does not predict future returns.
+
+## Plotting
+
+When the user asks for a chart or visual, use the plotting MCP server tools (call via Python if not available as MCP tools in-session):
+- `plot_performance(tickers, label_map, ...)` — normalised price lines for individual holdings
+- `plot_portfolio_breakdown(portfolio_id, breakdown_by)` — pie chart by holding, sector, or geography
+- `plot_portfolio_performance(portfolio_id, benchmark_tickers, ...)` — aggregate portfolio value vs benchmark
+
+Charts are saved as interactive HTML to `output/charts/` — tell the user to open the file in a browser.

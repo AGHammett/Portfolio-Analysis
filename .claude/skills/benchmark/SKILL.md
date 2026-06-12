@@ -59,3 +59,11 @@ risk worth it (Sharpe), and what does the correlation suggest about diversificat
 
 Always note the exact date range used.
 Always note that past performance does not predict future returns.
+
+## Plotting
+
+When the user asks for a chart or visual, use the plotting MCP server:
+- `plot_performance(tickers, label_map, ...)` — normalised price lines for individual holdings vs benchmark tickers
+- `plot_portfolio_performance(portfolio_id, benchmark_tickers, benchmark_label_map, ...)` — aggregate portfolio value vs one or more benchmarks
+
+Charts are saved as interactive HTML to `output/charts/`.

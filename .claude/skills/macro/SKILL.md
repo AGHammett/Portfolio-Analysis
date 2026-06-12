@@ -59,3 +59,11 @@ then present how the portfolio or holding performed within that context.
 Always show both nominal and real returns when inflation is relevant.
 Plain English interpretation should explain what the macro environment meant for
 this specific portfolio given its composition — not generic macro commentary.
+
+## Plotting
+
+When the user asks for a chart or visual, use the plotting MCP server:
+- `plot_performance(tickers, label_map, ..., show_macro=True)` — normalised price performance with BoE base rate and CPI on a dual y-axis
+- `plot_real_vs_nominal(tickers, label_map, ...)` — nominal vs CPI-adjusted real return lines per ticker
+
+Charts are saved as interactive HTML to `output/charts/`.

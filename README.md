@@ -27,6 +27,7 @@ src/pipeline/
         macro.py                 ← BoE base rate + ONS CPI
 src/mcp_servers/
     yfinance_server.py           ← MCP server for on-demand price fetching
+    plotting_server.py           ← MCP server for interactive Plotly charts (output/charts/)
 data/
     portfolio.db                 ← SQLite database (gitignored)
     raw/
@@ -53,7 +54,7 @@ data/
    python -m venv .venv
    .venv\Scripts\activate      # Windows
    source .venv/bin/activate   # macOS / Linux
-   pip install polars yfinance mcp
+   pip install polars yfinance mcp plotly
    ```
 
 2. Edit `config.py` to match your portfolios and file paths.
@@ -76,6 +77,7 @@ data/
    Then edit `.mcp.json` and replace the placeholder paths with your actual paths:
    - `sqlite` → absolute path to `data/portfolio.db`
    - `yfinance` → path to your Python executable and to `src/mcp_servers/yfinance_server.py`
+   - `plotting` → path to your Python executable and to `src/mcp_servers/plotting_server.py`
 
    On **macOS/Linux**, change `"command": "npx.cmd"` to `"command": "npx"` in the sqlite entry.
 
@@ -124,3 +126,20 @@ What-if scenarios. Simulates how the portfolio would have performed under hypoth
 - *How would an equal-weight version of my portfolio have done?*
 
 Past performance does not predict future returns.
+
+### Plotting
+
+Ask for any chart in plain English and Claude will use the plotting MCP server to generate an interactive HTML file in `output/charts/`. Open it in any browser.
+
+| Tool | What it produces |
+|---|---|
+| `plot_performance` | Normalised price lines for individual tickers; pass `show_macro=True` to overlay BoE rate and CPI |
+| `plot_portfolio_performance` | Aggregate portfolio value vs benchmark(s) |
+| `plot_portfolio_breakdown` | Pie chart by holding, sector, or geography |
+| `plot_portfolio_real_vs_nominal` | Aggregate portfolio value as nominal and CPI-adjusted real return |
+| `plot_real_vs_nominal` | Nominal vs CPI-adjusted real return per individual ticker |
+
+Examples:
+- *Plot my ISA against the FTSE 100 over the last year*
+- *Show a breakdown of my ISA by sector*
+- *Chart my real vs nominal returns since 2022*
