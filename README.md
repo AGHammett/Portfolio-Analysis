@@ -14,6 +14,8 @@ A personal UK investment portfolio analysis tool. Ingests holdings from Hargreav
 
 ```
 config.py                        ← portfolios, benchmarks, settings, ticker map
+Dockerfile                       ← builds the portfolio-mcp image for yfinance/plotting servers
+requirements.txt                 ← Python dependencies for the Docker image
 .mcp.json.example                ← MCP server config template (copy to .mcp.json)
 scripts/
     ingest.py                    ← run this to refresh all data
@@ -49,7 +51,9 @@ data/
 
 ## Setup
 
-1. Clone the repo and create a virtual environment:
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) and Node.js (for the sqlite MCP server via npx).
+
+1. Clone the repo and create a virtual environment (used for data ingestion):
    ```
    python -m venv .venv
    .venv\Scripts\activate      # Windows
@@ -57,27 +61,31 @@ data/
    pip install polars yfinance mcp plotly
    ```
 
-2. Edit `config.py` to match your portfolios and file paths.
+2. Build the Docker image for the yfinance and plotting MCP servers:
+   ```
+   docker build -t portfolio-mcp .
+   ```
 
-3. Export your portfolio from your broker's platform (I use Hargreaves Lansdown) and save the CSV files to `data/raw/`.
+3. Edit `config.py` to match your portfolios and file paths.
 
-4. Download macro data:
+4. Export your portfolio from your broker's platform (I use Hargreaves Lansdown) and save the CSV files to `data/raw/`.
+
+5. Download macro data:
    - **BoE base rate**: [bankofengland.co.uk](https://www.bankofengland.co.uk/boeapps/database/Bank-Rate.asp) → Export → save as `data/raw/boe_rates.csv`
    - **ONS CPI**: [ons.gov.uk](https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23) → Download → save as `data/raw/ons_cpi.csv`
 
-5. Run the ingest script:
+6. Run the ingest script:
    ```
    python scripts/ingest.py
    ```
 
-6. Set up the MCP servers for Claude Code:
+7. Set up the MCP servers for Claude Code:
    ```
    cp .mcp.json.example .mcp.json   # or copy on Windows
    ```
-   Then edit `.mcp.json` and replace the placeholder paths with your actual paths:
-   - `sqlite` → absolute path to `data/portfolio.db`
-   - `yfinance` → path to your Python executable and to `src/mcp_servers/yfinance_server.py`
-   - `plotting` → path to your Python executable and to `src/mcp_servers/plotting_server.py`
+   Then edit `.mcp.json` and replace the placeholder paths:
+   - `sqlite` → absolute path to `data/portfolio.db` in the `SQLITE_DB_PATH` env var
+   - `yfinance` and `plotting` → replace `C:/path/to/Portfolio-Analysis` in the `-v` volume mount arg with the absolute path to this repo
 
    On **macOS/Linux**, change `"command": "npx.cmd"` to `"command": "npx"` in the sqlite entry.
 

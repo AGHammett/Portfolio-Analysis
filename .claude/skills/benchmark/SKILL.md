@@ -62,7 +62,9 @@ Always note that past performance does not predict future returns.
 
 ## Plotting
 
-When the user asks for a chart or visual, use the plotting MCP server:
+Only generate a chart if the user explicitly requests one. Do not plot by default.
+
+When plotting is requested, use the plotting MCP server:
 - `plot_performance(tickers, label_map, ...)` — normalised price lines for individual holdings vs benchmark tickers
 - `plot_portfolio_performance(portfolio_id, benchmark_tickers, benchmark_label_map, ...)` — aggregate portfolio value vs one or more benchmarks
 

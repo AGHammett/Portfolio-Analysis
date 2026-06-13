@@ -33,9 +33,9 @@ When querying holdings across portfolios, join `holdings` to `portfolios` on `po
 
 ## MCP servers
 Three MCP servers are available (configured in `.mcp.json`):
-- `sqlite` — read/write access to `data/portfolio.db`; use this for all database queries
-- `yfinance` — fetches price history for any Yahoo Finance ticker and inserts it into the prices table; use the `fetch_ticker_prices` tool when a counterfactual ticker is not yet in the prices table
-- `plotting` — generates interactive Plotly charts saved as HTML to `output/charts/`; use when the user asks for a chart or visual
+- `sqlite` — read/write access to `data/portfolio.db`; runs locally via npx; use this for all database queries
+- `yfinance` — fetches price history for any Yahoo Finance ticker and inserts it into the prices table; runs in Docker (`portfolio-mcp` image); use the `fetch_ticker_prices` tool when a counterfactual ticker is not yet in the prices table
+- `plotting` — generates interactive Plotly charts saved as HTML to `output/charts/`; runs in Docker (`portfolio-mcp` image); use when the user explicitly asks for a chart or visual
 
 ## Plotting tools
 The plotting MCP server exposes five tools:
@@ -45,7 +45,7 @@ The plotting MCP server exposes five tools:
 - `plot_portfolio_breakdown(portfolio_id, breakdown_by)` — pie chart by holding, sector, or geography
 - `plot_real_vs_nominal(tickers, label_map, start_date, end_date)` — nominal vs CPI-adjusted real return lines for individual tickers
 
-If the plotting tools are not available as MCP tools in the current session, call `src/mcp_servers/plotting_server.py` directly via `.venv/Scripts/python.exe`.
+If the plotting tools are not available as MCP tools in the current session, run the Docker container directly: `docker run --rm -i -v <absolute-path-to-repo>:/app portfolio-mcp python src/mcp_servers/plotting_server.py`.
 
 ## Data ingestion
 Run `scripts/ingest.py` to refresh prices and load new HL exports.

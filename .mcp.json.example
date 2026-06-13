@@ -12,10 +12,21 @@
       }
     },
     "yfinance": {
-      "type": "stdio",
-      "command": "C:\\path\\to\\python.exe",
+      "command": "docker",
       "args": [
-        "C:\\path\\to\\Portfolio-Analysis\\src\\mcp_servers\\yfinance_server.py"
+        "run", "--rm", "-i",
+        "-v", "C:/path/to/Portfolio-Analysis:/app",
+        "portfolio-mcp",
+        "python", "src/mcp_servers/yfinance_server.py"
+      ]
+    },
+    "plotting": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-v", "C:/path/to/Portfolio-Analysis:/app",
+        "portfolio-mcp",
+        "python", "src/mcp_servers/plotting_server.py"
       ]
     }
   }
